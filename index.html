@@ -131,22 +131,49 @@
       <span class="status-badge" id="syncStatus">Offline</span>
     </header>
 
+    <!-- ATTENDANCE SECTION -->
     <div class="section-card">
       <h3>Attendance Panel</h3>
-      <input type="date" id="attDate" style="padding: 5px; margin-bottom: 10px;">
-      <div id="attendanceList">Records will appear here...</div>
+      <div style="margin-bottom: 10px;">
+        <input type="date" id="attDate" style="padding: 5px;">
+        <input type="text" id="attName" placeholder="Staff Name" style="padding: 5px;">
+        <select id="attStatus" style="padding: 5px;">
+          <option value="Present">Present</option>
+          <option value="Absent">Absent</option>
+          <option value="Half-Day">Half-Day</option>
+        </select>
+        <button class="btn" style="width: auto; padding: 6px 15px;" onclick="addAttendance()">Add</button>
+      </div>
+      <div id="attendanceList" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;"></div>
     </div>
 
+    <!-- STOCK SECTION -->
     <div class="section-card">
       <h3>Stock & Inventory</h3>
-      <div id="stockList">Inventory will appear here...</div>
+      <div style="margin-bottom: 10px;">
+        <input type="text" id="stockName" placeholder="Pump Model / Item" style="padding: 5px;">
+        <input type="number" id="stockQty" placeholder="Qty" style="padding: 5px; width: 60px;">
+        <button class="btn" style="width: auto; padding: 6px 15px;" onclick="addStock()">Add Stock</button>
+      </div>
+      <div id="stockList" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;"></div>
     </div>
 
+    <!-- LEDGER SECTION -->
     <div class="section-card">
       <h3>Ledger</h3>
-      <div id="ledgerList">Ledger entries will appear here...</div>
+      <div style="margin-bottom: 10px;">
+        <input type="text" id="ledgerDesc" placeholder="Description" style="padding: 5px;">
+        <input type="number" id="ledgerAmount" placeholder="Amount (₹)" style="padding: 5px; width: 100px;">
+        <select id="ledgerType" style="padding: 5px;">
+          <option value="Credit">Credit (+)</option>
+          <option value="Debit">Debit (-)</option>
+        </select>
+        <button class="btn" style="width: auto; padding: 6px 15px;" onclick="addLedger()">Add Entry</button>
+      </div>
+      <div id="ledgerList" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;"></div>
     </div>
   </div>
+
 
   <!-- MAIN JAVASCRIPT BLOCK -->
   <script>
@@ -245,7 +272,7 @@
 
     // --- 4. RENDER UI FUNCTIONS ---
     // This updates your screen whenever new data comes in from the cloud
-    function renderApp() {
+        function renderApp() {
       // Safely ensure arrays exist
       if (!appData.attendance) appData.attendance = [];
       if (!appData.stock) appData.stock = [];
@@ -257,12 +284,52 @@
       document.getElementById('ledgerList').innerText = "Total Ledger Entries: " + appData.ledger.length;
     }
 
+
     // Call this function whenever you ADD data to push it back to the cloud
     function pushDataToCloud() {
       if (db) {
         db.ref('appData').set(appData);
       }
     }
+        // --- 5. DATA ENTRY FUNCTIONS ---
+
+    function addAttendance() {
+      const date = document.getElementById('attDate').value;
+      const name = document.getElementById('attName').value.trim();
+      const status = document.getElementById('attStatus').value;
+      
+      if (!name) return alert("Please enter a staff name.");
+      
+      appData.attendance.push({ date: date, name: name, status: status });
+      document.getElementById('attName').value = ""; // Clear input
+      pushDataToCloud(); // Send to Firebase instantly
+    }
+
+    function addStock() {
+      const name = document.getElementById('stockName').value.trim();
+      const qty = document.getElementById('stockQty').value;
+      
+      if (!name || !qty) return alert("Please enter an item name and quantity.");
+      
+      appData.stock.push({ name: name, qty: qty });
+      document.getElementById('stockName').value = ""; // Clear input
+      document.getElementById('stockQty').value = "";
+      pushDataToCloud(); 
+    }
+
+    function addLedger() {
+      const desc = document.getElementById('ledgerDesc').value.trim();
+      const amount = document.getElementById('ledgerAmount').value;
+      const type = document.getElementById('ledgerType').value;
+      
+      if (!desc || !amount) return alert("Please enter a description and amount.");
+      
+      appData.ledger.push({ desc: desc, amount: amount, type: type, date: new Date().toLocaleDateString() });
+      document.getElementById('ledgerDesc').value = ""; // Clear input
+      document.getElementById('ledgerAmount').value = "";
+      pushDataToCloud(); 
+    }
+
   </script>
 </body>
 </html>
