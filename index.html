@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Surya Pumps Pro</title>
+  
+  <!-- Firebase SDKs (Version 8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    /* --- BASIC STYLING --- */
+    :root {
+      --primary: #007bff;
+      --danger: #dc3545;
+      --success: #28a745;
+      --bg: #f4f7f6;
+      --text: #333;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    
+    /* --- LOGIN OVERLAY --- */
+    #loginOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .login-card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      width: 100%;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    
+    /* --- MAIN APP --- */
+    #appContent {
+      display: none; /* Hidden until login */
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .status-badge {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: white;
+      background: #6c757d;
+    }
+    .section-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN OVERLAY -->
+  <div id="loginOverlay">
+    <div class="login-card">
+      <h2>Surya Pumps Pro</h2>
+      <p>Enter credentials to access catalog</p>
+      <div class="form-group">
+        <label>User ID</label>
+        <input type="text" id="loginId" placeholder="Enter ID">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter Password">
+      </div>
+      <button class="btn" type="button" onclick="attemptLogin()">Login</button>
+      <div id="loginErr" style="color: var(--danger); font-size: 0.9rem; margin-top: 15px; font-weight: bold;"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION CONTENT -->
+  <div id="appContent">
+    <header>
+      <h1>Surya Pumps Pro</h1>
+      <span class="status-badge" id="syncStatus">Offline</span>
+    </header>
+
+    <div class="section-card">
+      <h3>Attendance Panel</h3>
+      <input type="date" id="attDate" style="padding: 5px; margin-bottom: 10px;">
+      <div id="attendanceList">Records will appear here...</div>
+    </div>
+
+    <div class="section-card">
+      <h3>Stock & Inventory</h3>
+      <div id="stockList">Inventory will appear here...</div>
+    </div>
+
+    <div class="section-card">
+      <h3>Ledger</h3>
+      <div id="ledgerList">Ledger entries will appear here...</div>
+    </div>
+  </div>
+
+  <!-- MAIN JAVASCRIPT BLOCK -->
+  <script>
+    // --- 1. CREDENTIALS & SETUP ---
+    const VALID_USER = "surya";
+    const VALID_PASS = "surya123";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyYRzobvCTmtqm3HqCiGOan1C9rYa0",
+      appId: "1:72100756068:web:061d25a0aa3787dbbebd71",
+      authDomain: "surya-pumps.firebaseapp.com",
+      databaseURL: "https://surya-pumps-default-rtdb.firebaseio.com",
+      projectId: "surya-pumps",
+      storageBucket: "surya-pumps.appspot.com",
+      messagingSenderId: "72100756068"
+    };
+
+    let db = null;
+    let sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+    let mySessionRef = null;
+    
+    // The master data object
+    let appData = { stock: [], attendance: [], ledger: [] };
+
+    // Initialize Firebase
+    try {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+      }
+    } catch (e) {
+      console.warn("Firebase Init Error:", e);
+    }
+
+    // --- 2. LOGIN FUNCTION ---
+    function attemptLogin() {
+      const user = document.getElementById('loginId').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      const errDiv = document.getElementById('loginErr');
+
+      // Check Credentials
+      if (user !== VALID_USER || pass !== VALID_PASS) {
+        if (errDiv) errDiv.innerText = "Invalid User ID or Password!";
+        return;
+      }
+
+      // Unlock UI
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('appContent').style.display = 'block';
+
+      // Set default date
+      const dateInput = document.getElementById('attDate');
+      if (dateInput) {
+        dateInput.value = new Date().toISOString().substring(0, 10);
+      }
+
+      // Trigger Cloud Sync
+      startCloudSync();
+    }
+
+    // --- 3. CLOUD DATA SYNC ---
+    function startCloudSync() {
+      if (!db) {
+        document.getElementById('syncStatus').innerText = "DB Error";
+        return;
+      }
+
+      const statusBadge = document.getElementById('syncStatus');
+      statusBadge.innerText = "Connecting...";
+
+      // Track active session (Max 3 users handled server-side ideally, but registered here)
+      mySessionRef = db.ref('active_sessions/' + sessionId);
+      mySessionRef.set({ timestamp: Date.now(), user: VALID_USER });
+      mySessionRef.onDisconnect().remove();
+
+      // Listen for Live App Data
+      db.ref('appData').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          appData = data;
+          renderApp(); // Update the screen
+        }
+
+        if (statusBadge) {
+          statusBadge.innerText = "Live Synced";
+          statusBadge.style.background = "var(--success)";
+        }
+      }, (error) => {
+        console.error("Sync Error:", error);
+        if (statusBadge) {
+          statusBadge.innerText = "Offline Mode";
+          statusBadge.style.background = "var(--danger)";
+        }
+      });
+    }
+
+    // --- 4. RENDER UI FUNCTIONS ---
+    // This updates your screen whenever new data comes in from the cloud
+    function renderApp() {
+      // Safely ensure arrays exist
+      if (!appData.attendance) appData.attendance = [];
+      if (!appData.stock) appData.stock = [];
+      if (!appData.ledger) appData.ledger = [];
+
+      // Render simple text for now (You can expand these later!)
+      document.getElementById('attendanceList').innerText = "Total Attendance Records: " + appData.attendance.length;
+      document.getElementById('stockList').innerText = "Total Stock Items: " + appData.stock.length;
+      document.getElementById('ledgerList').innerText = "Total Ledger Entries: " + appData.ledger.length;
+    }
+
+    // Call this function whenever you ADD data to push it back to the cloud
+    function pushDataToCloud() {
+      if (db) {
+        db.ref('appData').set(appData);
+      }
+    }
+  </script>
+</body>
+</html>
