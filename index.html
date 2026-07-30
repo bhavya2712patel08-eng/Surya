@@ -5,103 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Surya Pumps Pro</title>
   
-  <!-- Firebase SDKs (Version 8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <style>
-    /* --- BASIC STYLING --- */
-    :root {
-      --primary: #007bff;
-      --danger: #dc3545;
-      --success: #28a745;
-      --bg: #f4f7f6;
-      --text: #333;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg);
-      color: var(--text);
-    }
+    :root { --primary: #007bff; --danger: #dc3545; --success: #28a745; --bg: #f4f7f6; --text: #333; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); }
     
-    /* --- LOGIN OVERLAY --- */
     #loginOverlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000;
     }
-    .login-card {
-      background: #fff;
-      padding: 30px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    .form-group {
-      margin-bottom: 15px;
-      text-align: left;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      width: 100%;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
+    .login-card { background: #fff; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
+    .form-group { margin-bottom: 15px; text-align: left; }
+    .form-group input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+    .btn-small { padding: 5px 10px; font-size: 0.9rem; margin-left: 5px; }
     
-    /* --- MAIN APP --- */
-    #appContent {
-      display: none; /* Hidden until login */
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #ddd;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
-    }
-    .status-badge {
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      color: white;
-      background: #6c757d;
-    }
-    .section-card {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+    #appContent { display: none; padding: 20px; max-width: 800px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
+    .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; color: white; background: #6c757d; }
+    .section-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    
+    .row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .row input, .row select { flex: 1; padding: 8px; min-width: 120px; }
+    
+    .list-item { padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .dashboard-stat { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
   </style>
 </head>
 <body>
@@ -110,72 +40,88 @@
   <div id="loginOverlay">
     <div class="login-card">
       <h2>Surya Pumps Pro</h2>
-      <p>Enter credentials to access catalog</p>
-      <div class="form-group">
-        <label>User ID</label>
-        <input type="text" id="loginId" placeholder="Enter ID">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPass" placeholder="Enter Password">
-      </div>
-      <button class="btn" type="button" onclick="attemptLogin()">Login</button>
-      <div id="loginErr" style="color: var(--danger); font-size: 0.9rem; margin-top: 15px; font-weight: bold;"></div>
+      <div class="form-group"><input type="text" id="loginId" placeholder="User ID"></div>
+      <div class="form-group"><input type="password" id="loginPass" placeholder="Password"></div>
+      <button class="btn" style="width: 100%" type="button" onclick="attemptLogin()">Login</button>
+      <div id="loginErr" style="color: var(--danger); margin-top: 15px; font-weight: bold;"></div>
     </div>
   </div>
 
-  <!-- MAIN APPLICATION CONTENT -->
+  <!-- MAIN APP -->
   <div id="appContent">
     <header>
       <h1>Surya Pumps Pro</h1>
       <span class="status-badge" id="syncStatus">Offline</span>
     </header>
 
-    <!-- ATTENDANCE SECTION -->
+    <!-- DASHBOARD -->
+    <div class="section-card" style="background: #e9ecef;">
+      <h3>Today's Dashboard (<span id="todayDateLabel"></span>)</h3>
+      <p>Staff Present Today: <span class="dashboard-stat" id="presentCount">0</span></p>
+    </div>
+
+    <!-- SETTINGS: STAFF & HOLIDAYS -->
     <div class="section-card">
-      <h3>Attendance Panel</h3>
-      <div style="margin-bottom: 10px;">
-        <input type="date" id="attDate" style="padding: 5px;">
-        <input type="text" id="attName" placeholder="Staff Name" style="padding: 5px;">
-        <select id="attStatus" style="padding: 5px;">
+      <h3>Staff & Holiday Settings</h3>
+      <div class="row">
+        <input type="text" id="newStaffName" placeholder="New Staff Name">
+        <button class="btn" onclick="addStaff()">Add Staff</button>
+      </div>
+      <div class="row" style="margin-top: 15px;">
+        <input type="date" id="holidayDate">
+        <input type="text" id="holidayName" placeholder="Holiday Name (e.g. Diwali)">
+        <button class="btn" onclick="addHoliday()">Set Holiday</button>
+      </div>
+      <details style="margin-top: 10px; cursor: pointer; color: var(--primary);">
+        <summary>View Registered Staff & Holidays</summary>
+        <div id="settingsList" style="margin-top: 10px; color: var(--text);"></div>
+      </details>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="section-card">
+      <h3>Mark Attendance</h3>
+      <div class="row">
+        <input type="date" id="attDate">
+        <select id="attStaffSelect"><option value="">Select Staff...</option></select>
+        <select id="attStatus">
           <option value="Present">Present</option>
           <option value="Absent">Absent</option>
           <option value="Half-Day">Half-Day</option>
         </select>
-        <button class="btn" style="width: auto; padding: 6px 15px;" onclick="addAttendance()">Add</button>
+        <button class="btn" onclick="markAttendance()">Save</button>
       </div>
-      <div id="attendanceList" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;"></div>
+      <div id="attendanceList"></div>
     </div>
 
-    <!-- STOCK SECTION -->
+    <!-- STOCK CATALOGUE -->
     <div class="section-card">
-      <h3>Stock & Inventory</h3>
-      <div style="margin-bottom: 10px;">
-        <input type="text" id="stockName" placeholder="Pump Model / Item" style="padding: 5px;">
-        <input type="number" id="stockQty" placeholder="Qty" style="padding: 5px; width: 60px;">
-        <button class="btn" style="width: auto; padding: 6px 15px;" onclick="addStock()">Add Stock</button>
+      <h3>Stock Catalogue</h3>
+      <div class="row">
+        <input type="text" id="stockName" placeholder="Pump/Part Name">
+        <input type="number" id="stockQty" placeholder="Qty">
+        <button class="btn" style="background: var(--success);" onclick="updateStock('add')">Add (+)</button>
+        <button class="btn" style="background: var(--danger);" onclick="updateStock('remove')">Deduct (-)</button>
       </div>
-      <div id="stockList" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;"></div>
+      <div id="stockList"></div>
     </div>
 
-    <!-- LEDGER SECTION -->
+    <!-- LEDGER -->
     <div class="section-card">
       <h3>Ledger</h3>
-      <div style="margin-bottom: 10px;">
-        <input type="text" id="ledgerDesc" placeholder="Description" style="padding: 5px;">
-        <input type="number" id="ledgerAmount" placeholder="Amount (₹)" style="padding: 5px; width: 100px;">
-        <select id="ledgerType" style="padding: 5px;">
+      <div class="row">
+        <input type="text" id="ledgerDesc" placeholder="Description">
+        <input type="number" id="ledgerAmount" placeholder="Amount (₹)">
+        <select id="ledgerType">
           <option value="Credit">Credit (+)</option>
           <option value="Debit">Debit (-)</option>
         </select>
-        <button class="btn" style="width: auto; padding: 6px 15px;" onclick="addLedger()">Add Entry</button>
+        <button class="btn" onclick="addLedger()">Add Entry</button>
       </div>
-      <div id="ledgerList" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;"></div>
+      <div id="ledgerList"></div>
     </div>
   </div>
 
-
-  <!-- MAIN JAVASCRIPT BLOCK -->
   <script>
     // --- 1. CREDENTIALS & SETUP ---
     const VALID_USER = "surya";
@@ -193,143 +139,209 @@
 
     let db = null;
     let sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
-    let mySessionRef = null;
     
-    // The master data object
-    let appData = { stock: [], attendance: [], ledger: [] };
+    // Master Data Structure
+    let appData = { staff: [], holidays: {}, attendance: {}, stock: {}, ledger: [] };
+    let todayString = new Date().toISOString().substring(0, 10);
 
-    // Initialize Firebase
     try {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
       }
-    } catch (e) {
-      console.warn("Firebase Init Error:", e);
-    }
+    } catch (e) { console.warn(e); }
 
-    // --- 2. LOGIN FUNCTION ---
+    // --- 2. LOGIN & SYNC ---
     function attemptLogin() {
-      const user = document.getElementById('loginId').value.trim();
-      const pass = document.getElementById('loginPass').value.trim();
-      const errDiv = document.getElementById('loginErr');
-
-      // Check Credentials
-      if (user !== VALID_USER || pass !== VALID_PASS) {
-        if (errDiv) errDiv.innerText = "Invalid User ID or Password!";
+      if (document.getElementById('loginId').value.trim() !== VALID_USER || 
+          document.getElementById('loginPass').value.trim() !== VALID_PASS) {
+        document.getElementById('loginErr').innerText = "Invalid Credentials!";
         return;
       }
 
-      // Unlock UI
       document.getElementById('loginOverlay').style.display = 'none';
       document.getElementById('appContent').style.display = 'block';
+      document.getElementById('attDate').value = todayString;
+      document.getElementById('todayDateLabel').innerText = todayString;
 
-      // Set default date
-      const dateInput = document.getElementById('attDate');
-      if (dateInput) {
-        dateInput.value = new Date().toISOString().substring(0, 10);
-      }
-
-      // Trigger Cloud Sync
       startCloudSync();
     }
 
-    // --- 3. CLOUD DATA SYNC ---
     function startCloudSync() {
-      if (!db) {
-        document.getElementById('syncStatus').innerText = "DB Error";
-        return;
-      }
-
       const statusBadge = document.getElementById('syncStatus');
       statusBadge.innerText = "Connecting...";
 
-      // Track active session (Max 3 users handled server-side ideally, but registered here)
-      mySessionRef = db.ref('active_sessions/' + sessionId);
-      mySessionRef.set({ timestamp: Date.now(), user: VALID_USER });
-      mySessionRef.onDisconnect().remove();
+      // Register this session (Max 3 setup)
+      db.ref('active_sessions/' + sessionId).set({ timestamp: Date.now(), user: VALID_USER });
+      db.ref('active_sessions/' + sessionId).onDisconnect().remove();
 
-      // Listen for Live App Data
       db.ref('appData').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
-          appData = data;
-          renderApp(); // Update the screen
+          appData = {
+            staff: data.staff || [],
+            holidays: data.holidays || {},
+            attendance: data.attendance || {},
+            stock: data.stock || {},
+            ledger: data.ledger || []
+          };
+          runTimeCheck(); // Check for 10 AM auto-absent
+          renderApp();
         }
-
-        if (statusBadge) {
-          statusBadge.innerText = "Live Synced";
-          statusBadge.style.background = "var(--success)";
-        }
-      }, (error) => {
-        console.error("Sync Error:", error);
-        if (statusBadge) {
-          statusBadge.innerText = "Offline Mode";
-          statusBadge.style.background = "var(--danger)";
-        }
+        statusBadge.innerText = "Live Synced";
+        statusBadge.style.background = "var(--success)";
       });
     }
 
-    // --- 4. RENDER UI FUNCTIONS ---
-    // This updates your screen whenever new data comes in from the cloud
-        function renderApp() {
-      // Safely ensure arrays exist
-      if (!appData.attendance) appData.attendance = [];
-      if (!appData.stock) appData.stock = [];
-      if (!appData.ledger) appData.ledger = [];
-
-      // Render simple text for now (You can expand these later!)
-      document.getElementById('attendanceList').innerText = "Total Attendance Records: " + appData.attendance.length;
-      document.getElementById('stockList').innerText = "Total Stock Items: " + appData.stock.length;
-      document.getElementById('ledgerList').innerText = "Total Ledger Entries: " + appData.ledger.length;
+    function pushDataToCloud() {
+      if (db) db.ref('appData').set(appData);
     }
 
+    // --- 3. AUTO-ABSENT LOGIC ---
+    function runTimeCheck() {
+      const now = new Date();
+      // If it is past 10 AM, AND today is NOT a holiday
+      if (now.getHours() >= 10 && !appData.holidays[todayString]) {
+        let changed = false;
+        
+        // Ensure today's attendance record exists
+        if (!appData.attendance[todayString]) appData.attendance[todayString] = {};
 
-    // Call this function whenever you ADD data to push it back to the cloud
-    function pushDataToCloud() {
-      if (db) {
-        db.ref('appData').set(appData);
+        // Loop through all registered staff
+        appData.staff.forEach(person => {
+          // If they haven't been marked present/half-day yet, mark them Absent automatically
+          if (!appData.attendance[todayString][person]) {
+            appData.attendance[todayString][person] = "Absent (Auto)";
+            changed = true;
+          }
+        });
+
+        // If the system made changes, save it to the cloud
+        if (changed) pushDataToCloud();
       }
     }
-        // --- 5. DATA ENTRY FUNCTIONS ---
 
-    function addAttendance() {
-      const date = document.getElementById('attDate').value;
-      const name = document.getElementById('attName').value.trim();
-      const status = document.getElementById('attStatus').value;
-      
-      if (!name) return alert("Please enter a staff name.");
-      
-      appData.attendance.push({ date: date, name: name, status: status });
-      document.getElementById('attName').value = ""; // Clear input
-      pushDataToCloud(); // Send to Firebase instantly
+    // --- 4. ADD DATA FUNCTIONS ---
+    function addStaff() {
+      const name = document.getElementById('newStaffName').value.trim();
+      if (!name) return;
+      if (!appData.staff.includes(name)) appData.staff.push(name);
+      document.getElementById('newStaffName').value = "";
+      pushDataToCloud();
     }
 
-    function addStock() {
+    function addHoliday() {
+      const date = document.getElementById('holidayDate').value;
+      const name = document.getElementById('holidayName').value.trim();
+      if (!date || !name) return alert("Select date and holiday name.");
+      appData.holidays[date] = name;
+      document.getElementById('holidayName').value = "";
+      pushDataToCloud();
+    }
+
+    function markAttendance() {
+      const date = document.getElementById('attDate').value;
+      const name = document.getElementById('attStaffSelect').value;
+      const status = document.getElementById('attStatus').value;
+      
+      if (!name) return alert("Please select a staff member.");
+      if (appData.holidays[date]) return alert("Cannot mark attendance on a registered holiday!");
+
+      if (!appData.attendance[date]) appData.attendance[date] = {};
+      appData.attendance[date][name] = status;
+      pushDataToCloud();
+    }
+
+    function updateStock(action) {
       const name = document.getElementById('stockName').value.trim();
-      const qty = document.getElementById('stockQty').value;
+      const qty = parseInt(document.getElementById('stockQty').value);
+      if (!name || isNaN(qty) || qty <= 0) return alert("Enter valid item and quantity.");
+
+      let currentQty = appData.stock[name] || 0;
       
-      if (!name || !qty) return alert("Please enter an item name and quantity.");
-      
-      appData.stock.push({ name: name, qty: qty });
-      document.getElementById('stockName').value = ""; // Clear input
+      if (action === 'add') {
+        appData.stock[name] = currentQty + qty;
+      } else if (action === 'remove') {
+        if (currentQty - qty < 0) return alert("Not enough stock available to deduct!");
+        appData.stock[name] = currentQty - qty;
+      }
+
+      document.getElementById('stockName').value = "";
       document.getElementById('stockQty').value = "";
-      pushDataToCloud(); 
+      pushDataToCloud();
     }
 
     function addLedger() {
       const desc = document.getElementById('ledgerDesc').value.trim();
       const amount = document.getElementById('ledgerAmount').value;
       const type = document.getElementById('ledgerType').value;
+      if (!desc || !amount) return;
       
-      if (!desc || !amount) return alert("Please enter a description and amount.");
-      
-      appData.ledger.push({ desc: desc, amount: amount, type: type, date: new Date().toLocaleDateString() });
-      document.getElementById('ledgerDesc').value = ""; // Clear input
-      document.getElementById('ledgerAmount').value = "";
+      appData.ledger.unshift({ desc, amount, type, date: new Date().toLocaleDateString() });
+      document.getElementById('ledgerDesc').value = ""; document.getElementById('ledgerAmount').value = "";
       pushDataToCloud(); 
     }
 
+    // --- 5. RENDER UI ---
+    function renderApp() {
+      // Populate Staff Dropdown
+      const staffSelect = document.getElementById('attStaffSelect');
+      staffSelect.innerHTML = '<option value="">Select Staff...</option>';
+      appData.staff.forEach(name => {
+        staffSelect.innerHTML += `<option value="${name}">${name}</option>`;
+      });
+
+      // Render Settings List (Staff & Holidays)
+      let settingsHTML = `<strong>Staff:</strong> ${appData.staff.join(', ') || 'None'}<br><br><strong>Holidays:</strong><br>`;
+      Object.keys(appData.holidays).forEach(date => {
+        settingsHTML += `${date}: ${appData.holidays[date]}<br>`;
+      });
+      document.getElementById('settingsList').innerHTML = settingsHTML;
+
+      // Render Dashboard Present Count
+      let presentCount = 0;
+      let todaysAtt = appData.attendance[todayString] || {};
+      Object.values(todaysAtt).forEach(status => {
+        if (status === "Present") presentCount++;
+      });
+      document.getElementById('presentCount').innerText = presentCount;
+
+      // Render Attendance List (Showing selected date)
+      const selectedDate = document.getElementById('attDate').value || todayString;
+      let attHTML = `<div style="background:#f8f9fa; padding:5px; text-align:center; margin-bottom:10px;"><strong>Records for: ${selectedDate}</strong></div>`;
+      
+      if (appData.holidays[selectedDate]) {
+        attHTML += `<div style="color: var(--primary); text-align:center;">Holiday: ${appData.holidays[selectedDate]}</div>`;
+      } else {
+        const dateRecords = appData.attendance[selectedDate] || {};
+        if (Object.keys(dateRecords).length === 0) attHTML += "No records yet.";
+        Object.keys(dateRecords).forEach(name => {
+          let stat = dateRecords[name];
+          let color = stat === "Present" ? "green" : (stat.includes("Absent") ? "red" : "orange");
+          attHTML += `<div class="list-item"><span>${name}</span> <strong style="color: ${color}">${stat}</strong></div>`;
+        });
+      }
+      document.getElementById('attendanceList').innerHTML = attHTML;
+
+      // Render Stock Catalogue
+      let stockHTML = "";
+      if (Object.keys(appData.stock).length === 0) stockHTML = "Catalogue is empty.";
+      Object.keys(appData.stock).forEach(name => {
+        stockHTML += `<div class="list-item"><strong>${name}</strong> <span>Total Qty: ${appData.stock[name]}</span></div>`;
+      });
+      document.getElementById('stockList').innerHTML = stockHTML;
+
+      // Render Ledger List
+      let ledgerHTML = "";
+      appData.ledger.slice(0, 10).forEach(item => { // Show last 10 entries
+        let color = item.type === "Credit" ? "green" : "red";
+        ledgerHTML += `<div class="list-item"><span>${item.date} - ${item.desc}</span> <strong style="color: ${color}">${item.type === "Credit" ? "+" : "-"}₹${item.amount}</strong></div>`;
+      });
+      document.getElementById('ledgerList').innerHTML = ledgerHTML || "No ledger entries yet.";
+    }
+
+    // Refresh attendance list when date picker is changed
+    document.getElementById('attDate').addEventListener('change', renderApp);
   </script>
 </body>
 </html>
