@@ -18,14 +18,14 @@
 </head>
 <body class="bg-gray-100 text-gray-800 h-screen overflow-hidden relative">
 
-    <!-- ================= LOGIN SCREEN ================= -->
+    <!-- ================= SIMPLE LOGIN SCREEN ================= -->
     <div id="login-screen" class="absolute inset-0 bg-slate-900 flex items-center justify-center z-50">
         <div class="bg-white p-10 rounded-2xl shadow-2xl w-96 max-w-full text-center">
             <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
                 <i class="fas fa-lock"></i>
             </div>
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Surya ERP</h2>
-            <p class="text-gray-500 text-sm mb-6">Enter your credentials to access the system</p>
+            <p class="text-gray-500 text-sm mb-6">Enter your ID and password to access</p>
             
             <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
                 <div>
@@ -40,13 +40,13 @@
                     Incorrect ID or Password!
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white font-bold rounded-lg px-4 py-3 hover:bg-blue-700 transition mt-2">
-                    Secure Login
+                    Login
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- ================= MAIN APPLICATION (Hidden until logged in) ================= -->
+    <!-- ================= MAIN APPLICATION ================= -->
     <div id="app-layout" class="hidden h-screen w-full flex">
         
         <!-- Sidebar Navigation -->
@@ -121,7 +121,12 @@
                 <!-- 2. ATTENDANCE TAB -->
                 <div id="attendance" class="tab-content space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Add New Employee</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">Add New Employee</h3>
+                            <button onclick="exportAttendanceCSV()" class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
+                                <i class="fas fa-file-excel"></i> Export Attendance CSV
+                            </button>
+                        </div>
                         <form onsubmit="addStaff(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <input type="text" id="staff-name" placeholder="Full Name" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
                             <input type="text" id="staff-role" placeholder="Job Role" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
@@ -141,7 +146,12 @@
                 <!-- 3. STOCK TAB -->
                 <div id="stock" class="tab-content space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Add Inventory Item</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">Add Inventory Item</h3>
+                            <button onclick="exportStockCSV()" class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
+                                <i class="fas fa-file-excel"></i> Export Stock CSV
+                            </button>
+                        </div>
                         <form onsubmit="addProduct(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <input type="text" id="prod-name" placeholder="Item Name" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
                             <input type="number" id="prod-qty" placeholder="Quantity" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
@@ -183,6 +193,9 @@
                                 <option value="2024">2024</option>
                                 <option value="2023">2023</option>
                             </select>
+                            <button onclick="exportPaymentsCSV()" class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
+                                <i class="fas fa-file-excel"></i> Export Payments CSV
+                            </button>
                         </div>
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 border-b text-xs uppercase text-gray-500 font-semibold">
@@ -196,15 +209,13 @@
         </main>
     </div>
 
-    <!-- UI & LOGIN LOGIC -->
+    <!-- UI LOGIN & EXPORT LOGIC -->
     <script>
-        // Check if already logged in via session
         if(sessionStorage.getItem('surya_logged_in') === 'true') {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-layout').classList.remove('hidden');
         }
 
-        // Handle Login Submission
         function handleLogin(e) {
             e.preventDefault();
             const id = document.getElementById('login-id').value;
@@ -220,7 +231,6 @@
             }
         }
 
-        // Handle Logout
         function logout() {
             sessionStorage.removeItem('surya_logged_in');
             document.getElementById('login-id').value = '';
@@ -229,7 +239,6 @@
             document.getElementById('login-screen').classList.remove('hidden');
         }
 
-        // Tab Switching
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -242,7 +251,7 @@
         }
     </script>
 
-    <!-- FIREBASE CLOUD DATABASE LOGIC -->
+    <!-- FIREBASE LIVE SYNC & CSV EXPORT LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot } 
@@ -280,11 +289,7 @@
 
         window.addStaff = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, "staff"), { 
-                name: document.getElementById('staff-name').value, 
-                role: document.getElementById('staff-role').value, 
-                status: 'PRESENT' 
-            });
+            await addDoc(collection(db, "staff"), { name: document.getElementById('staff-name').value, role: document.getElementById('staff-role').value, status: 'PRESENT' });
             e.target.reset();
         };
 
@@ -296,11 +301,7 @@
 
         window.addProduct = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, "stock"), { 
-                name: document.getElementById('prod-name').value, 
-                qty: parseInt(document.getElementById('prod-qty').value), 
-                price: parseFloat(document.getElementById('prod-price').value) 
-            });
+            await addDoc(collection(db, "stock"), { name: document.getElementById('prod-name').value, qty: parseInt(document.getElementById('prod-qty').value), price: parseFloat(document.getElementById('prod-price').value) });
             e.target.reset();
         };
 
@@ -308,16 +309,46 @@
 
         window.addPayment = async (e) => {
             e.preventDefault();
-            await addDoc(collection(db, "payments"), { 
-                desc: document.getElementById('pay-desc').value, 
-                amount: parseFloat(document.getElementById('pay-amount').value), 
-                type: document.getElementById('pay-type').value, 
-                date: document.getElementById('pay-date').value 
-            });
+            await addDoc(collection(db, "payments"), { desc: document.getElementById('pay-desc').value, amount: parseFloat(document.getElementById('pay-amount').value), type: document.getElementById('pay-type').value, date: document.getElementById('pay-date').value });
             e.target.reset();
         };
 
         window.deletePayment = async (id) => await deleteDoc(doc(db, "payments", id));
+
+        // CSV EXPORT FUNCTIONS
+        window.exportAttendanceCSV = () => {
+            let csv = 'Staff Name,Role,Status\n';
+            state.staff.forEach(s => {
+                csv += `"${s.name}","${s.role}",${s.status}\n`;
+            });
+            downloadCSV(csv, 'Surya_ERP_Attendance.csv');
+        };
+
+        window.exportStockCSV = () => {
+            let csv = 'Item Name,Quantity,Price (INR)\n';
+            state.stock.forEach(item => {
+                csv += `"${item.name}",${item.qty},${item.price}\n`;
+            });
+            downloadCSV(csv, 'Surya_ERP_Stock.csv');
+        };
+
+        window.exportPaymentsCSV = () => {
+            let csv = 'Date,Description,Type,Amount (INR)\n';
+            state.payments.forEach(p => {
+                csv += `"${p.date}","${p.desc}",${p.type},${p.amount}\n`;
+            });
+            downloadCSV(csv, 'Surya_ERP_Payments.csv');
+        };
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         window.renderStaff = () => {
             document.getElementById('attendance-table-body').innerHTML = state.staff.map(s => `
