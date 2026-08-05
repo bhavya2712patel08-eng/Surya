@@ -1,388 +1,678 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surya ERP Suite</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surya Pumps — Operations Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B2A4A;
+    --navy-deep:#071B31;
+    --steel:#1F5C8B;
+    --steel-light:#2E7CB8;
+    --orange:#E8622C;
+    --orange-light:#FF7A42;
+    --gray:#6B7A87;
+    --bg:#F3F5F6;
+    --panel:#FFFFFF;
+    --line:#E2E7EA;
+    --success:#2E8B57;
+    --danger:#C0392B;
+    --text:#16232E;
+    --text-soft:#5B6B77;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+  h1,h2,h3,.display{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(46,124,184,0.25), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(232,98,44,0.15), transparent 40%),
+      var(--navy-deep);
+    position:relative;overflow:hidden;
+  }
+  #login-screen::before{
+    content:"";position:absolute;inset:0;
+    background-image:repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 48px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 48px);
+  }
+  .login-card{
+    position:relative;z-index:2;width:380px;max-width:90vw;background:var(--panel);
+    border-radius:4px;padding:40px 36px 32px;box-shadow:0 30px 60px rgba(0,0,0,0.4);
+    border-top:4px solid var(--orange);
+  }
+  .login-brand{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .gauge{width:40px;height:40px;flex-shrink:0;}
+  .login-brand h1{font-size:28px;margin:0;color:var(--navy);line-height:1;}
+  .login-sub{color:var(--text-soft);font-size:13px;margin:0 0 28px;letter-spacing:0.04em;text-transform:uppercase;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-soft);margin-bottom:6px;}
+  .field input{
+    width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:3px;font-size:15px;
+    font-family:'Inter',sans-serif;transition:border-color .15s;
+  }
+  .field input:focus{outline:none;border-color:var(--steel-light);}
+  .login-btn{
+    width:100%;padding:12px;margin-top:8px;background:var(--navy);color:#fff;border:none;border-radius:3px;
+    font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+    cursor:pointer;transition:background .15s;
+  }
+  .login-btn:hover{background:var(--steel);}
+  .login-error{color:var(--danger);font-size:13px;margin-top:12px;min-height:16px;}
+  .login-note{font-size:11px;color:var(--text-soft);margin-top:20px;line-height:1.5;border-top:1px solid var(--line);padding-top:14px;}
+
+  /* ---------- APP SHELL ---------- */
+  #app{display:none;min-height:100vh;}
+  .shell{display:flex;min-height:100vh;}
+  .sidebar{
+    width:220px;background:var(--navy-deep);color:#fff;flex-shrink:0;display:flex;flex-direction:column;
+    position:fixed;top:0;bottom:0;left:0;
+  }
+  .side-brand{padding:22px 20px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .side-brand .gauge{width:30px;height:30px;}
+  .side-brand span{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;letter-spacing:0.02em;}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:13px 20px;color:rgba(255,255,255,0.65);
+    cursor:pointer;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;
+    border-left:3px solid transparent;transition:all .15s;
+  }
+  .nav-item:hover{color:#fff;background:rgba(255,255,255,0.04);}
+  .nav-item.active{color:#fff;border-left-color:var(--orange);background:rgba(255,255,255,0.06);}
+  .nav-icon{width:16px;text-align:center;font-size:14px;}
+  .sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:rgba(255,255,255,0.4);}
+  .logout-btn{
+    margin-top:10px;width:100%;padding:8px;background:rgba(255,255,255,0.08);color:#fff;border:none;border-radius:3px;
+    font-size:11px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;font-weight:600;
+  }
+  .logout-btn:hover{background:var(--orange);}
+
+  .main{margin-left:220px;flex:1;padding:28px 36px 60px;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;}
+  .topbar h2{font-size:30px;margin:0;color:var(--navy);}
+  .topbar .date{color:var(--text-soft);font-size:13px;}
+  .sync-pill{
+    display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--success);font-weight:600;
+    background:rgba(46,139,87,0.1);padding:4px 10px;border-radius:20px;letter-spacing:0.04em;text-transform:uppercase;
+  }
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:28px;}
+  .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:20px;border-left:3px solid var(--steel);}
+  .stat-card.orange{border-left-color:var(--orange);}
+  .stat-card.danger{border-left-color:var(--danger);}
+  .stat-card.success{border-left-color:var(--success);}
+  .stat-label{font-size:11px;color:var(--text-soft);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;}
+  .stat-value{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:700;color:var(--navy);line-height:1.3;}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:22px;margin-bottom:20px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .panel-head h3{font-size:20px;margin:0;color:var(--navy);}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{
+    text-align:left;padding:10px 12px;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;
+    color:var(--text-soft);border-bottom:2px solid var(--line);font-weight:700;
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#FAFBFC;}
+
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;}
+  .badge.present{background:rgba(46,139,87,0.12);color:var(--success);}
+  .badge.absent{background:rgba(192,57,43,0.12);color:var(--danger);}
+  .badge.pending{background:rgba(107,122,135,0.12);color:var(--gray);}
+  .badge.low{background:rgba(232,98,44,0.14);color:var(--orange);}
+  .badge.ok{background:rgba(46,139,87,0.12);color:var(--success);}
+
+  .btn{
+    padding:8px 16px;border:none;border-radius:3px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+    cursor:pointer;transition:opacity .15s;
+  }
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{opacity:0.85;}
+  .btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--line);}
+  .btn-outline:hover{border-color:var(--steel);}
+  .btn-danger{background:transparent;color:var(--danger);border:1.5px solid rgba(192,57,43,0.3);}
+  .btn-danger:hover{background:rgba(192,57,43,0.08);}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+
+  .form-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .form-row input, .form-row select{
+    padding:9px 11px;border:1.5px solid var(--line);border-radius:3px;font-family:'Inter',sans-serif;font-size:13px;flex:1;min-width:120px;
+  }
+  .form-row input:focus, .form-row select:focus{outline:none;border-color:var(--steel-light);}
+
+  .empty{padding:30px;text-align:center;color:var(--text-soft);font-size:13px;}
+  .lock-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy-deep);color:#fff;text-align:center;padding:30px;
+  }
+  .lock-screen h2{font-size:26px;}
+  .lock-screen p{color:rgba(255,255,255,0.6);max-width:400px;font-size:14px;line-height:1.6;}
+
+  @media(max-width:800px){
+    .sidebar{width:64px;}
+    .side-brand span, .nav-item span.label{display:none;}
+    .main{margin-left:64px;padding:20px 16px 50px;}
+    .nav-item{justify-content:center;padding:14px 0;}
+    .side-brand{justify-content:center;}
+  }
+</style>
 </head>
-<body class="bg-gray-100 text-gray-800 h-screen overflow-hidden relative">
+<body>
 
-    <!-- ================= SIMPLE LOGIN SCREEN ================= -->
-    <div id="login-screen" class="absolute inset-0 bg-slate-900 flex items-center justify-center z-50">
-        <div class="bg-white p-10 rounded-2xl shadow-2xl w-96 max-w-full text-center">
-            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
-                <i class="fas fa-lock"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Surya ERP</h2>
-            <p class="text-gray-500 text-sm mb-6">Enter your ID and password to access</p>
-            
-            <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Login ID</label>
-                    <input type="text" id="login-id" required class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="login-pass" required class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div id="login-error" class="text-rose-600 text-sm hidden font-medium text-center">
-                    Incorrect ID or Password!
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold rounded-lg px-4 py-3 hover:bg-blue-700 transition mt-2">
-                    Login
-                </button>
-            </form>
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <svg class="gauge" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="#0B2A4A" stroke-width="2.5"/>
+        <path d="M20 20 L28 12" stroke="#E8622C" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="3" fill="#0B2A4A"/>
+        <path d="M11 26 Q20 32 29 26" stroke="#1F5C8B" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h1>Surya Pumps</h1>
+    </div>
+    <p class="login-sub">Operations Dashboard — Staff Login</p>
+    <div class="field">
+      <label>User ID</label>
+      <input type="text" id="login-id" autocomplete="username" placeholder="Enter ID">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-pass" autocomplete="current-password" placeholder="Enter password">
+    </div>
+    <button class="login-btn" onclick="attemptLogin()">Sign In</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-note">Access is limited to 3 active sessions at a time on this device/browser. Attendance auto-locks to "Absent" after 11:00 AM daily if not marked present.</div>
+  </div>
+</div>
+
+<!-- ============ SESSION LIMIT LOCK SCREEN ============ -->
+<div class="lock-screen" id="lock-screen" style="display:none;">
+  <div>
+    <h2>Maximum Users Reached</h2>
+    <p>3 people are already using this dashboard right now. Please wait for a slot to free up (sessions time out automatically after 60 seconds of inactivity), then reload this page.</p>
+    <button class="btn btn-outline" style="margin-top:16px;color:#fff;border-color:rgba(255,255,255,0.3);" onclick="location.reload()">Retry</button>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="app">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="side-brand">
+        <svg class="gauge" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#fff" stroke-width="2"/>
+          <path d="M20 20 L28 12" stroke="#E8622C" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="20" cy="20" r="3" fill="#fff"/>
+        </svg>
+        <span>SURYA PUMPS</span>
+      </div>
+      <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="nav-icon">◆</span><span class="label">Dashboard</span></div>
+      <div class="nav-item" data-tab="attendance" onclick="switchTab('attendance')"><span class="nav-icon">◷</span><span class="label">Attendance</span></div>
+      <div class="nav-item" data-tab="stock" onclick="switchTab('stock')"><span class="nav-icon">▤</span><span class="label">Stock Tracker</span></div>
+      <div class="nav-item" data-tab="payments" onclick="switchTab('payments')"><span class="nav-icon">₹</span><span class="label">Payments</span></div>
+      <div class="sidebar-footer">
+        Signed in as <strong id="current-user-label">Surya</strong>
+        <button class="logout-btn" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h2 id="page-title">Dashboard</h2>
+          <div class="date" id="page-date"></div>
         </div>
+        <div class="sync-pill"><span class="sync-dot"></span> Synced locally</div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="tab-dashboard" class="tab-content">
+        <div class="grid">
+          <div class="stat-card success">
+            <div class="stat-label">Present Today</div>
+            <div class="stat-value" id="stat-present">0</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-label">Absent Today</div>
+            <div class="stat-value" id="stat-absent">0</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Low Stock Items</div>
+            <div class="stat-value" id="stat-lowstock">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Net Balance</div>
+            <div class="stat-value mono" id="stat-balance">₹0</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Recent Payment Activity</h3></div>
+          <table id="dash-payments-table">
+            <thead><tr><th>Date</th><th>Party</th><th>Type</th><th>Amount</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE -->
+      <div id="tab-attendance" class="tab-content" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Today's Attendance — <span id="att-date"></span></h3>
+          </div>
+          <div class="form-row">
+            <input type="text" id="new-staff-name" placeholder="New staff name">
+            <input type="text" id="new-staff-role" placeholder="Role (e.g. Fitter, Welder)">
+            <button class="btn btn-primary" onclick="addStaff()">Add Staff</button>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Marked At</th><th>Action</th></tr></thead>
+            <tbody id="attendance-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STOCK -->
+      <div id="tab-stock" class="tab-content" style="display:none;">
+        <div class="panel">
+          <div class="panel-head"><h3>Submersible Pump Stock</h3></div>
+          <div class="form-row">
+            <input type="text" id="stock-name" placeholder="Model name (e.g. SP-5HP)">
+            <input type="number" id="stock-qty" placeholder="Quantity" min="0">
+            <input type="number" id="stock-threshold" placeholder="Low stock alert below" min="0" value="10">
+            <button class="btn btn-primary" onclick="addStock()">Add / Update</button>
+          </div>
+          <table>
+            <thead><tr><th>Model</th><th>Quantity</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="stock-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div id="tab-payments" class="tab-content" style="display:none;">
+        <div class="panel">
+          <div class="panel-head"><h3>Payments Ledger</h3></div>
+          <div class="form-row">
+            <input type="text" id="pay-party" placeholder="Customer / Vendor name">
+            <select id="pay-type">
+              <option value="in">Payment In</option>
+              <option value="out">Payment Out</option>
+            </select>
+            <input type="number" id="pay-amount" placeholder="Amount (₹)" min="0">
+            <button class="btn btn-primary" onclick="addPayment()">Add Entry</button>
+          </div>
+          <table>
+            <thead><tr><th>Date</th><th>Party</th><th>Type</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody id="payments-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
+  </div>
+</div>
 
-    <!-- ================= MAIN APPLICATION ================= -->
-    <div id="app-layout" class="hidden h-screen w-full flex">
-        
-        <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl flex-shrink-0">
-            <div class="h-20 flex items-center justify-center border-b border-slate-800 px-4">
-                <h1 class="text-xl font-bold tracking-wider text-blue-400"><i class="fas fa-building mr-2"></i>SURYA ERP</h1>
-            </div>
-            <nav class="flex-1 px-4 py-6 space-y-2">
-                <button onclick="switchTab('dashboard', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 bg-blue-600 rounded-lg text-left font-medium transition">
-                    <i class="fas fa-home w-5"></i> Dashboard
-                </button>
-                <button onclick="switchTab('attendance', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg text-left font-medium hover:bg-slate-800 transition">
-                    <i class="fas fa-users w-5"></i> Staff Attendance
-                </button>
-                <button onclick="switchTab('stock', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg text-left font-medium hover:bg-slate-800 transition">
-                    <i class="fas fa-boxes-stacked w-5"></i> Stock Management
-                </button>
-                <button onclick="switchTab('payments', this)" class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-slate-300 rounded-lg text-left font-medium hover:bg-slate-800 transition">
-                    <i class="fas fa-receipt w-5"></i> Payments (4 Years)
-                </button>
-            </nav>
-            <div class="p-4 border-t border-slate-800 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white">S</div>
-                    <div>
-                        <p class="text-sm font-semibold">Surya</p>
-                        <p class="text-xs text-emerald-400"><i class="fas fa-wifi"></i> Live Sync</p>
-                    </div>
-                </div>
-                <button onclick="logout()" class="text-slate-400 hover:text-white transition" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-        </aside>
+<script>
+/* =========================================================
+   SURYA PUMPS — OPERATIONS DASHBOARD
+   Single-file static build (localStorage-backed).
 
-        <!-- Main Workspace -->
-        <main class="flex-1 flex flex-col h-screen overflow-y-auto">
-            <header class="h-20 bg-white border-b flex items-center justify-between px-8 z-10 sticky top-0">
-                <h2 class="text-2xl font-bold text-gray-800" id="page-title">Executive Dashboard</h2>
-                <div class="flex items-center gap-3">
-                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Firebase Connected
-                    </span>
-                </div>
-            </header>
+   IMPORTANT NOTES FOR FUTURE DEVELOPMENT:
+   - Credentials below are client-side only. Fine for an internal
+     single-office tool, but NOT secure for a public GitHub repo
+     long-term. Before scaling this into a real multi-branch app,
+     move auth to a backend (Node/Express, Firebase Auth, etc.)
+     and never ship real passwords in committed source code.
+   - Data persistence uses localStorage, which is PER BROWSER,
+     not synced across different devices/computers. To get true
+     real-time multi-device sync (e.g. Delhi office + Mumbai office
+     seeing the same live data), swap the storage functions below
+     for a backend/database call (Firebase Realtime DB, Supabase,
+     or a custom REST API) — the rest of the app logic won't need
+     to change, only the get/save functions.
+   - The "3 users at a time" limit is simulated via a heartbeat
+     stored in localStorage + a BroadcastChannel for same-device
+     tabs. Enforcing this truly across separate devices requires
+     server-side session tracking.
+   ========================================================= */
 
-            <!-- Content Area -->
-            <div class="p-8 space-y-6">
+const VALID_ID = "Surya";
+const VALID_PASS = "Surya0607";
+const SESSION_TIMEOUT_MS = 60000; // 60s heartbeat timeout
+const HEARTBEAT_INTERVAL_MS = 8000;
+const MAX_SESSIONS = 3;
 
-                <!-- 1. DASHBOARD TAB -->
-                <div id="dashboard" class="tab-content active space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <p class="text-xs font-semibold text-gray-500 uppercase">Total Revenue (4Y)</p>
-                            <p class="text-2xl font-bold text-gray-900 mt-2" id="dash-total-revenue">₹ 0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <p class="text-xs font-semibold text-gray-500 uppercase">Staff On Duty</p>
-                            <p class="text-2xl font-bold text-gray-900 mt-2" id="dash-staff-count">0 / 0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <p class="text-xs font-semibold text-gray-500 uppercase">Total Products</p>
-                            <p class="text-2xl font-bold text-gray-900 mt-2" id="dash-product-count">0</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <p class="text-xs font-semibold text-gray-500 uppercase">Low Stock Warnings</p>
-                            <p class="text-2xl font-bold text-amber-600 mt-2" id="dash-low-stock">0</p>
-                        </div>
-                    </div>
-                </div>
+let sessionId = null;
+let heartbeatTimer = null;
 
-                <!-- 2. ATTENDANCE TAB -->
-                <div id="attendance" class="tab-content space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-gray-800">Add New Employee</h3>
-                            <button onclick="exportAttendanceCSV()" class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
-                                <i class="fas fa-file-excel"></i> Export Attendance CSV
-                            </button>
-                        </div>
-                        <form onsubmit="addStaff(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" id="staff-name" placeholder="Full Name" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <input type="text" id="staff-role" placeholder="Job Role" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <button type="submit" class="bg-blue-600 text-white font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition">Add Staff</button>
-                        </form>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 border-b text-xs uppercase text-gray-500 font-semibold">
-                                <tr><th class="p-4">Name</th><th class="p-4">Role</th><th class="p-4">Status</th><th class="p-4">Actions</th></tr>
-                            </thead>
-                            <tbody id="attendance-table-body" class="divide-y text-sm"></tbody>
-                        </table>
-                    </div>
-                </div>
+/* ---------- storage helpers ---------- */
+function load(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(e){ return fallback; }
+}
+function save(key, value){
+  localStorage.setItem(key, JSON.stringify(value));
+}
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
 
-                <!-- 3. STOCK TAB -->
-                <div id="stock" class="tab-content space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-gray-800">Add Inventory Item</h3>
-                            <button onclick="exportStockCSV()" class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
-                                <i class="fas fa-file-excel"></i> Export Stock CSV
-                            </button>
-                        </div>
-                        <form onsubmit="addProduct(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <input type="text" id="prod-name" placeholder="Item Name" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <input type="number" id="prod-qty" placeholder="Quantity" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <input type="number" id="prod-price" placeholder="Price (₹)" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <button type="submit" class="bg-blue-600 text-white font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition">Add Stock</button>
-                        </form>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 border-b text-xs uppercase text-gray-500 font-semibold">
-                                <tr><th class="p-4">Item Name</th><th class="p-4">Qty</th><th class="p-4">Price</th><th class="p-4">Status</th><th class="p-4">Actions</th></tr>
-                            </thead>
-                            <tbody id="stock-table-body" class="divide-y text-sm"></tbody>
-                        </table>
-                    </div>
-                </div>
+/* ---------- session / concurrency handling ---------- */
+function getActiveSessions(){
+  const sessions = load("surya_active_sessions", []);
+  const now = Date.now();
+  return sessions.filter(s => now - s.ts < SESSION_TIMEOUT_MS);
+}
+function registerSession(){
+  sessionId = "s_" + Math.random().toString(36).slice(2,10);
+  let sessions = getActiveSessions();
+  sessions.push({ id: sessionId, ts: Date.now() });
+  save("surya_active_sessions", sessions);
+  heartbeatTimer = setInterval(() => {
+    let sessions = getActiveSessions().filter(s => s.id !== sessionId);
+    sessions.push({ id: sessionId, ts: Date.now() });
+    save("surya_active_sessions", sessions);
+  }, HEARTBEAT_INTERVAL_MS);
+  window.addEventListener("beforeunload", releaseSession);
+}
+function releaseSession(){
+  if(!sessionId) return;
+  let sessions = getActiveSessions().filter(s => s.id !== sessionId);
+  save("surya_active_sessions", sessions);
+  if(heartbeatTimer) clearInterval(heartbeatTimer);
+}
 
-                <!-- 4. PAYMENTS TAB -->
-                <div id="payments" class="tab-content space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Log Transaction</h3>
-                        <form onsubmit="addPayment(event)" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                            <input type="text" id="pay-desc" placeholder="Description" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <input type="number" id="pay-amount" placeholder="Amount (₹)" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <select id="pay-type" class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                                <option value="INCOME">Income (+)</option>
-                                <option value="EXPENSE">Expense (-)</option>
-                            </select>
-                            <input type="date" id="pay-date" required class="border rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                            <button type="submit" class="bg-blue-600 text-white font-medium rounded-lg px-4 py-2 hover:bg-blue-700 transition">Save</button>
-                        </form>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="p-6 border-b flex justify-between items-center">
-                            <select id="year-filter" onchange="renderPayments()" class="border rounded-lg px-3 py-2 text-sm outline-none">
-                                <option value="ALL">All Years (2023 - 2026)</option>
-                                <option value="2026">2026</option>
-                                <option value="2025">2025</option>
-                                <option value="2024">2024</option>
-                                <option value="2023">2023</option>
-                            </select>
-                            <button onclick="exportPaymentsCSV()" class="bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2">
-                                <i class="fas fa-file-excel"></i> Export Payments CSV
-                            </button>
-                        </div>
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50 border-b text-xs uppercase text-gray-500 font-semibold">
-                                <tr><th class="p-4">Date</th><th class="p-4">Description</th><th class="p-4">Type</th><th class="p-4">Amount</th><th class="p-4">Action</th></tr>
-                            </thead>
-                            <tbody id="payments-table-body" class="divide-y text-sm"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
+/* ---------- login ---------- */
+function attemptLogin(){
+  const id = document.getElementById("login-id").value.trim();
+  const pass = document.getElementById("login-pass").value;
+  const errEl = document.getElementById("login-error");
 
-    <!-- UI LOGIN & EXPORT LOGIC -->
-    <script>
-        if(sessionStorage.getItem('surya_logged_in') === 'true') {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-layout').classList.remove('hidden');
-        }
+  if(id !== VALID_ID || pass !== VALID_PASS){
+    errEl.textContent = "Incorrect ID or password.";
+    return;
+  }
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const id = document.getElementById('login-id').value;
-            const pass = document.getElementById('login-pass').value;
+  const activeSessions = getActiveSessions();
+  if(activeSessions.length >= MAX_SESSIONS){
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("lock-screen").style.display = "flex";
+    return;
+  }
 
-            if (id === 'surya' && pass === 'Surya123') {
-                sessionStorage.setItem('surya_logged_in', 'true');
-                document.getElementById('login-error').classList.add('hidden');
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-layout').classList.remove('hidden');
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-            }
-        }
+  registerSession();
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  document.getElementById("current-user-label").textContent = id;
+  initApp();
+}
+function logout(){
+  releaseSession();
+  location.reload();
+}
 
-        function logout() {
-            sessionStorage.removeItem('surya_logged_in');
-            document.getElementById('login-id').value = '';
-            document.getElementById('login-pass').value = '';
-            document.getElementById('app-layout').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
-        }
+/* ---------- app init ---------- */
+function initApp(){
+  const now = new Date();
+  document.getElementById("page-date").textContent = now.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById("att-date").textContent = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
 
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('bg-blue-600', 'text-white');
-                el.classList.add('text-slate-300', 'hover:bg-slate-800');
-            });
-            btn.classList.add('bg-blue-600', 'text-white');
-            btn.classList.remove('text-slate-300', 'hover:bg-slate-800');
-        }
-    </script>
+  ensureSeedData();
+  renderAttendance();
+  renderStock();
+  renderPayments();
+  renderDashboard();
 
-    <!-- FIREBASE LIVE SYNC & CSV EXPORT LOGIC -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot } 
-        from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  // auto-refresh every 20s to simulate live sync + re-check 11am cutoff
+  setInterval(() => {
+    renderAttendance();
+    renderDashboard();
+  }, 20000);
+}
 
-        // PASTE YOUR FIREBASE CONFIG HERE
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+function ensureSeedData(){
+  if(!localStorage.getItem("surya_staff")){
+    save("surya_staff", [
+      { id: "st1", name: "Ramesh Kumar", role: "Fitter" },
+      { id: "st2", name: "Suresh Yadav", role: "Welder" },
+      { id: "st3", name: "Anita Sharma", role: "Store Incharge" }
+    ]);
+  }
+  if(!localStorage.getItem("surya_stock")){
+    save("surya_stock", [
+      { name: "SP-3HP Submersible", qty: 24, threshold: 10 },
+      { name: "SP-5HP Submersible", qty: 8, threshold: 10 },
+      { name: "SP-10HP Submersible", qty: 15, threshold: 5 }
+    ]);
+  }
+  if(!localStorage.getItem("surya_payments")){
+    save("surya_payments", []);
+  }
+}
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+/* ---------- tabs ---------- */
+function switchTab(tab){
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+  document.querySelector('.nav-item[data-tab="'+tab+'"]').classList.add("active");
+  document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+  document.getElementById("tab-"+tab).style.display = "block";
+  const titles = { dashboard:"Dashboard", attendance:"Staff Attendance", stock:"Stock Tracker", payments:"Payments Tracker" };
+  document.getElementById("page-title").textContent = titles[tab];
+}
 
-        let state = { staff: [], stock: [], payments: [] };
+/* ---------- attendance ---------- */
+function addStaff(){
+  const name = document.getElementById("new-staff-name").value.trim();
+  const role = document.getElementById("new-staff-role").value.trim() || "Staff";
+  if(!name) return;
+  const staff = load("surya_staff", []);
+  staff.push({ id: "st_"+Date.now(), name, role });
+  save("surya_staff", staff);
+  document.getElementById("new-staff-name").value = "";
+  document.getElementById("new-staff-role").value = "";
+  renderAttendance();
+}
+function removeStaff(id){
+  let staff = load("surya_staff", []).filter(s => s.id !== id);
+  save("surya_staff", staff);
+  renderAttendance();
+}
+function markPresent(id){
+  const key = "surya_attendance_" + todayKey();
+  const record = load(key, {});
+  record[id] = { status: "present", time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) };
+  save(key, record);
+  renderAttendance();
+  renderDashboard();
+}
+function getAttendanceStatus(staffId){
+  const key = "surya_attendance_" + todayKey();
+  const record = load(key, {});
+  if(record[staffId]) return record[staffId];
 
-        onSnapshot(collection(db, "staff"), (snapshot) => {
-            state.staff = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderStaff(); updateDashboard();
-        });
+  const now = new Date();
+  const cutoff = new Date();
+  cutoff.setHours(11,0,0,0);
+  if(now >= cutoff){
+    return { status: "absent", time: "Auto (11:00 AM)" };
+  }
+  return { status: "pending", time: "—" };
+}
+function renderAttendance(){
+  const staff = load("surya_staff", []);
+  const tbody = document.getElementById("attendance-table-body");
+  tbody.innerHTML = "";
+  if(staff.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No staff added yet.</td></tr>';
+    return;
+  }
+  staff.forEach(s => {
+    const a = getAttendanceStatus(s.id);
+    const badgeClass = a.status === "present" ? "present" : a.status === "absent" ? "absent" : "pending";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(s.name)}</td>
+      <td>${escapeHtml(s.role)}</td>
+      <td><span class="badge ${badgeClass}">${a.status}</span></td>
+      <td class="mono">${a.time}</td>
+      <td>
+        ${a.status !== "present" ? `<button class="btn btn-primary btn-sm" onclick="markPresent('${s.id}')">Mark Present</button>` : ""}
+        <button class="btn btn-danger btn-sm" onclick="removeStaff('${s.id}')">Remove</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
 
-        onSnapshot(collection(db, "stock"), (snapshot) => {
-            state.stock = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderStock(); updateDashboard();
-        });
+/* ---------- stock ---------- */
+function addStock(){
+  const name = document.getElementById("stock-name").value.trim();
+  const qty = parseInt(document.getElementById("stock-qty").value);
+  const threshold = parseInt(document.getElementById("stock-threshold").value) || 10;
+  if(!name || isNaN(qty)) return;
+  let stock = load("surya_stock", []);
+  const existing = stock.find(s => s.name.toLowerCase() === name.toLowerCase());
+  if(existing){
+    existing.qty = qty;
+    existing.threshold = threshold;
+  } else {
+    stock.push({ name, qty, threshold });
+  }
+  save("surya_stock", stock);
+  document.getElementById("stock-name").value = "";
+  document.getElementById("stock-qty").value = "";
+  document.getElementById("stock-threshold").value = "10";
+  renderStock();
+  renderDashboard();
+}
+function removeStock(name){
+  let stock = load("surya_stock", []).filter(s => s.name !== name);
+  save("surya_stock", stock);
+  renderStock();
+  renderDashboard();
+}
+function renderStock(){
+  const stock = load("surya_stock", []);
+  const tbody = document.getElementById("stock-table-body");
+  tbody.innerHTML = "";
+  if(stock.length === 0){
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">No stock items yet.</td></tr>';
+    return;
+  }
+  stock.forEach(s => {
+    const low = s.qty <= s.threshold;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(s.name)}</td>
+      <td class="mono">${s.qty}</td>
+      <td><span class="badge ${low ? 'low' : 'ok'}">${low ? 'Low Stock' : 'In Stock'}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeStock('${escapeAttr(s.name)}')">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
 
-        onSnapshot(collection(db, "payments"), (snapshot) => {
-            state.payments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderPayments(); updateDashboard();
-        });
+/* ---------- payments ---------- */
+function addPayment(){
+  const party = document.getElementById("pay-party").value.trim();
+  const type = document.getElementById("pay-type").value;
+  const amount = parseFloat(document.getElementById("pay-amount").value);
+  if(!party || isNaN(amount)) return;
+  const payments = load("surya_payments", []);
+  payments.unshift({
+    id: "p_"+Date.now(),
+    date: new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }),
+    party, type, amount
+  });
+  save("surya_payments", payments);
+  document.getElementById("pay-party").value = "";
+  document.getElementById("pay-amount").value = "";
+  renderPayments();
+  renderDashboard();
+}
+function removePayment(id){
+  let payments = load("surya_payments", []).filter(p => p.id !== id);
+  save("surya_payments", payments);
+  renderPayments();
+  renderDashboard();
+}
+function renderPayments(){
+  const payments = load("surya_payments", []);
+  const tbody = document.getElementById("payments-table-body");
+  tbody.innerHTML = "";
+  if(payments.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No payment entries yet.</td></tr>';
+    return;
+  }
+  payments.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.date}</td>
+      <td>${escapeHtml(p.party)}</td>
+      <td><span class="badge ${p.type === 'in' ? 'ok' : 'absent'}">${p.type === 'in' ? 'In' : 'Out'}</span></td>
+      <td class="mono">₹${p.amount.toLocaleString('en-IN')}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removePayment('${p.id}')">Delete</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
 
-        window.addStaff = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, "staff"), { name: document.getElementById('staff-name').value, role: document.getElementById('staff-role').value, status: 'PRESENT' });
-            e.target.reset();
-        };
+/* ---------- dashboard ---------- */
+function renderDashboard(){
+  const staff = load("surya_staff", []);
+  let present = 0, absent = 0;
+  staff.forEach(s => {
+    const a = getAttendanceStatus(s.id);
+    if(a.status === "present") present++;
+    if(a.status === "absent") absent++;
+  });
+  document.getElementById("stat-present").textContent = present;
+  document.getElementById("stat-absent").textContent = absent;
 
-        window.toggleAttendance = async (id, currentStatus) => {
-            await updateDoc(doc(db, "staff", id), { status: currentStatus === 'PRESENT' ? 'ABSENT' : 'PRESENT' });
-        };
+  const stock = load("surya_stock", []);
+  const lowCount = stock.filter(s => s.qty <= s.threshold).length;
+  document.getElementById("stat-lowstock").textContent = lowCount;
 
-        window.deleteStaff = async (id) => await deleteDoc(doc(db, "staff", id));
+  const payments = load("surya_payments", []);
+  const balance = payments.reduce((sum, p) => sum + (p.type === "in" ? p.amount : -p.amount), 0);
+  document.getElementById("stat-balance").textContent = "₹" + balance.toLocaleString('en-IN');
 
-        window.addProduct = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, "stock"), { name: document.getElementById('prod-name').value, qty: parseInt(document.getElementById('prod-qty').value), price: parseFloat(document.getElementById('prod-price').value) });
-            e.target.reset();
-        };
+  const dashBody = document.querySelector("#dash-payments-table tbody");
+  dashBody.innerHTML = "";
+  payments.slice(0,5).forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${p.date}</td><td>${escapeHtml(p.party)}</td><td><span class="badge ${p.type==='in'?'ok':'absent'}">${p.type==='in'?'In':'Out'}</span></td><td class="mono">₹${p.amount.toLocaleString('en-IN')}</td>`;
+    dashBody.appendChild(tr);
+  });
+  if(payments.length === 0){
+    dashBody.innerHTML = '<tr><td colspan="4" class="empty">No activity yet.</td></tr>';
+  }
+}
 
-        window.deleteStock = async (id) => await deleteDoc(doc(db, "stock", id));
+/* ---------- utils ---------- */
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+function escapeAttr(str){
+  return String(str).replace(/'/g, "\\'");
+}
 
-        window.addPayment = async (e) => {
-            e.preventDefault();
-            await addDoc(collection(db, "payments"), { desc: document.getElementById('pay-desc').value, amount: parseFloat(document.getElementById('pay-amount').value), type: document.getElementById('pay-type').value, date: document.getElementById('pay-date').value });
-            e.target.reset();
-        };
-
-        window.deletePayment = async (id) => await deleteDoc(doc(db, "payments", id));
-
-        // CSV EXPORT FUNCTIONS
-        window.exportAttendanceCSV = () => {
-            let csv = 'Staff Name,Role,Status\n';
-            state.staff.forEach(s => {
-                csv += `"${s.name}","${s.role}",${s.status}\n`;
-            });
-            downloadCSV(csv, 'Surya_ERP_Attendance.csv');
-        };
-
-        window.exportStockCSV = () => {
-            let csv = 'Item Name,Quantity,Price (INR)\n';
-            state.stock.forEach(item => {
-                csv += `"${item.name}",${item.qty},${item.price}\n`;
-            });
-            downloadCSV(csv, 'Surya_ERP_Stock.csv');
-        };
-
-        window.exportPaymentsCSV = () => {
-            let csv = 'Date,Description,Type,Amount (INR)\n';
-            state.payments.forEach(p => {
-                csv += `"${p.date}","${p.desc}",${p.type},${p.amount}\n`;
-            });
-            downloadCSV(csv, 'Surya_ERP_Payments.csv');
-        };
-
-        function downloadCSV(csvContent, filename) {
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        window.renderStaff = () => {
-            document.getElementById('attendance-table-body').innerHTML = state.staff.map(s => `
-                <tr class="hover:bg-gray-50"><td class="p-4 font-semibold">${s.name}</td><td class="p-4">${s.role}</td>
-                <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${s.status}</span></td>
-                <td class="p-4 space-x-2"><button onclick="toggleAttendance('${s.id}', '${s.status}')" class="text-xs bg-gray-100 border px-3 py-1 rounded-md">Toggle</button><button onclick="deleteStaff('${s.id}')" class="text-xs text-rose-600">Remove</button></td></tr>
-            `).join('');
-        };
-
-        window.renderStock = () => {
-            document.getElementById('stock-table-body').innerHTML = state.stock.map(p => `
-                <tr class="hover:bg-gray-50"><td class="p-4 font-semibold">${p.name}</td><td class="p-4">${p.qty}</td>
-                <td class="p-4">₹ ${p.price}</td><td class="p-4">${p.qty <= 5 ? '<span class="text-amber-600 font-bold">Low</span>' : '<span class="text-emerald-600 font-bold">Optimal</span>'}</td>
-                <td class="p-4"><button onclick="deleteStock('${p.id}')" class="text-xs text-rose-600">Delete</button></td></tr>
-            `).join('');
-        };
-
-        window.renderPayments = () => {
-            const y = document.getElementById('year-filter').value;
-            const filtered = state.payments.filter(p => y === 'ALL' || p.date.startsWith(y));
-            document.getElementById('payments-table-body').innerHTML = filtered.map(p => `
-                <tr class="hover:bg-gray-50"><td class="p-4">${p.date}</td><td class="p-4">${p.desc}</td>
-                <td class="p-4 text-xs font-bold ${p.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}">${p.type}</td>
-                <td class="p-4 font-semibold ${p.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}">${p.type === 'INCOME' ? '+' : '-'} ₹ ${p.amount}</td>
-                <td class="p-4"><button onclick="deletePayment('${p.id}')" class="text-xs text-rose-600">Delete</button></td></tr>
-            `).join('');
-        };
-
-        window.updateDashboard = () => {
-            document.getElementById('dash-total-revenue').innerText = `₹ ${state.payments.filter(p => p.type === 'INCOME').reduce((s, p) => s + p.amount, 0)}`;
-            document.getElementById('dash-staff-count').innerText = `${state.staff.filter(s => s.status === 'PRESENT').length} / ${state.staff.length}`;
-            document.getElementById('dash-product-count').innerText = state.stock.length;
-            document.getElementById('dash-low-stock').innerText = state.stock.filter(s => s.qty <= 5).length;
-        };
-    </script>
+// allow Enter key to submit login
+document.getElementById("login-pass").addEventListener("keydown", e => {
+  if(e.key === "Enter") attemptLogin();
+});
+</script>
 </body>
 </html>
