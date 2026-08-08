@@ -39,6 +39,7 @@
     .btn:hover { background: var(--primary-hover); }
     .btn-danger { background: var(--danger); }
     .btn-success { background: var(--success); }
+    .btn-sm { padding: 6px 12px; font-size: 0.85rem; width: auto; }
 
     #appLayout { display: none; height: 100vh; display: flex; }
     .sidebar { width: 260px; background: var(--secondary); color: white; display: flex; flex-direction: column; }
@@ -76,7 +77,7 @@
     .tag.green { background: #d1fae5; color: #065f46; }
     .tag.red { background: #fee2e2; color: #991b1b; }
     .tag.orange { background: #fef3c7; color: #92400e; }
-    .recipe-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+    .recipe-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-start; }
   </style>
 </head>
 <body>
@@ -149,18 +150,18 @@
         <h2 class="page-title">Motor Manufacturing, Recipes & Sales</h2>
         
         <div class="panel">
-          <h3><i class="fa-solid fa-hammer"></i> Define / Build Motor Recipe (BOM)</h3>
-          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Configure components required to manufacture 1 unit of a motor model.</p>
+          <h3><i class="fa-solid fa-hammer"></i> Add / Update Motor Recipe (BOM)</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Enter an existing model name to modify its parts, or a new name to create one.</p>
           <div class="form-row">
             <input type="text" id="motorModelName" class="form-control" placeholder="Motor Model (e.g. Surya 1HP)">
             <select id="bomPartSelect" class="form-control"><option value="">Select Raw Part...</option></select>
             <input type="number" id="bomPartQty" class="form-control" placeholder="Parts Required Qty">
-            <button class="btn" style="width:auto;" onclick="addBOMItem()">Add Component to Recipe</button>
+            <button class="btn" style="width:auto;" onclick="addBOMItem()">Save Component to Recipe</button>
           </div>
         </div>
 
         <div class="panel">
-          <h3><i class="fa-solid fa-list-check"></i> Active Recipes & Itemized Components</h3>
+          <h3><i class="fa-solid fa-list-check"></i> Active Recipes, Itemized Components & Modifications</h3>
           <div id="recipeCatalogView"></div>
         </div>
 
@@ -269,7 +270,6 @@
     document.getElementById('attDate').value = todayString;
     document.getElementById('ledgerDate').value = todayString;
 
-    // --- SEED 4-YEAR HISTORICAL MOCK DATA IF EMPTY ---
     function seedHistoricalDataIfNeeded() {
       if (!appData.ledger || appData.ledger.length === 0) {
         appData.ledger = [
@@ -293,7 +293,6 @@
       }
     }
 
-    // --- 3 CONCURRENT USER LIMIT LOCK SYSTEM ---
     function attemptLogin() {
       const user = document.getElementById('loginUser').value.trim();
       const pass = document.getElementById('loginPass').value.trim();
@@ -415,7 +414,19 @@
       appData.recipes[model][part] = (appData.recipes[model][part] || 0) + qty;
       document.getElementById('bomPartQty').value = "";
       pushData();
-      alert(`Added ${qty}x ${part} to recipe '${model}'.`);
+      alert(`Updated recipe for '${model}'.`);
+    }
+
+    function loadRecipeIntoForm(modelName) {
+      document.getElementById('motorModelName').value = modelName;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteRecipe(modelName) {
+      if (confirm(`Are you sure you want to delete the recipe for '${modelName}'?`)) {
+        delete appData.recipes[modelName];
+        pushData();
+      }
     }
 
     function sellMotorAndDeduct() {
@@ -532,9 +543,15 @@
           partsItemsText += `<span class="tag orange" style="margin-right:5px; margin-bottom:5px; display:inline-block;">${p}: ${partsList[p]}</span>`;
         }
         catalogHTML += `<div class="recipe-card">
-          <h4 style="color:var(--primary); margin-bottom:8px;"><i class="fa-solid fa-gears"></i> ${model}</h4>
-          <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:5px;">Required Components per Unit:</div>
-          <div>${partsItemsText || "No components added yet."}</div>
+          <div>
+            <h4 style="color:var(--primary); margin-bottom:8px;"><i class="fa-solid fa-gears"></i> ${model}</h4>
+            <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:5px;">Required Components per Unit:</div>
+            <div>${partsItemsText || "No components added yet."}</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-sm" onclick="loadRecipeIntoForm('${model}')">Modify</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteRecipe('${model}')">Delete</button>
+          </div>
         </div>`;
       });
       document.getElementById('recipeCatalogView').innerHTML = catalogHTML || "<div class='list-item'>No motor recipes configured.</div>";
