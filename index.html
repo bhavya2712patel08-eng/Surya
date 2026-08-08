@@ -151,7 +151,7 @@
         
         <div class="panel">
           <h3><i class="fa-solid fa-hammer"></i> Add / Update Motor Recipe (BOM)</h3>
-          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Enter an existing model name to modify its parts, or a new name to create one.</p>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Click 'Modify' on any recipe below to load it here, adjust parts, and save updates.</p>
           <div class="form-row">
             <input type="text" id="motorModelName" class="form-control" placeholder="Motor Model (e.g. Surya 1HP)">
             <select id="bomPartSelect" class="form-control"><option value="">Select Raw Part...</option></select>
@@ -414,15 +414,15 @@
       appData.recipes[model][part] = (appData.recipes[model][part] || 0) + qty;
       document.getElementById('bomPartQty').value = "";
       pushData();
-      alert(`Updated recipe for '${model}'.`);
+      alert(`Recipe saved successfully for '${model}'.`);
     }
 
-    function loadRecipeIntoForm(modelName) {
+    window.loadRecipeIntoForm = function(modelName) {
       document.getElementById('motorModelName').value = modelName;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function deleteRecipe(modelName) {
+    window.deleteRecipe = function(modelName) {
       if (confirm(`Are you sure you want to delete the recipe for '${modelName}'?`)) {
         delete appData.recipes[modelName];
         pushData();
@@ -548,9 +548,9 @@
             <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:5px;">Required Components per Unit:</div>
             <div>${partsItemsText || "No components added yet."}</div>
           </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-sm" onclick="loadRecipeIntoForm('${model}')">Modify</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteRecipe('${model}')">Delete</button>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="btn btn-sm" type="button" onclick="loadRecipeIntoForm('${model.replace(/'/g, "\\'")}')">Modify</button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="deleteRecipe('${model.replace(/'/g, "\\'")}')">Delete</button>
           </div>
         </div>`;
       });
