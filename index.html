@@ -69,13 +69,14 @@
     .form-control { flex: 1; min-width: 150px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; outline: none; }
     .form-control:focus { border-color: var(--primary); }
 
-    .data-list { margin-top: 20px; }
+    .data-list { margin-top: 20px; max-height: 350px; overflow-y: auto; }
     .list-item { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fdfdfd; }
     .list-item:hover { background: var(--bg-main); }
     .tag { padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; }
     .tag.green { background: #d1fae5; color: #065f46; }
     .tag.red { background: #fee2e2; color: #991b1b; }
     .tag.orange { background: #fef3c7; color: #92400e; }
+    .recipe-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -126,11 +127,11 @@
 
       <!-- VIEW: DASHBOARD -->
       <div id="view-dashboard" class="view-container active">
-        <h2 class="page-title">Executive Overview</h2>
+        <h2 class="page-title">Executive Overview (4-Year Archive)</h2>
         <div class="dashboard-grid">
           <div class="stat-card">
             <div class="stat-icon" style="background: var(--primary);"><i class="fa-solid fa-motorcycle"></i></div>
-            <div class="stat-info"><h4>Assembled Motors</h4><h2 id="dashMotors">0</h2></div>
+            <div class="stat-info"><h4>Motor Recipes</h4><h2 id="dashMotors">0</h2></div>
           </div>
           <div class="stat-card">
             <div class="stat-icon" style="background: var(--success);"><i class="fa-solid fa-box"></i></div>
@@ -138,25 +139,29 @@
           </div>
           <div class="stat-card">
             <div class="stat-icon" style="background: #f59e0b;"><i class="fa-solid fa-wallet"></i></div>
-            <div class="stat-info"><h4>Payments Logged</h4><h2 id="dashPayments">0</h2></div>
+            <div class="stat-info"><h4>Transactions (2023-2026)</h4><h2 id="dashPayments">0</h2></div>
           </div>
         </div>
       </div>
 
-      <!-- VIEW: MOTOR ASSEMBLY & SALES -->
+      <!-- VIEW: MOTOR ASSEMBLY & RECIPES -->
       <div id="view-assembly" class="view-container">
-        <h2 class="page-title">Motor Manufacturing & Sales</h2>
+        <h2 class="page-title">Motor Manufacturing, Recipes & Sales</h2>
         
         <div class="panel">
-          <h3><i class="fa-solid fa-hammer"></i> Define Motor Recipe (BOM)</h3>
-          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Configure what raw parts make up 1 complete Motor model.</p>
+          <h3><i class="fa-solid fa-hammer"></i> Define / Build Motor Recipe (BOM)</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Configure components required to manufacture 1 unit of a motor model.</p>
           <div class="form-row">
             <input type="text" id="motorModelName" class="form-control" placeholder="Motor Model (e.g. Surya 1HP)">
             <select id="bomPartSelect" class="form-control"><option value="">Select Raw Part...</option></select>
             <input type="number" id="bomPartQty" class="form-control" placeholder="Parts Required Qty">
             <button class="btn" style="width:auto;" onclick="addBOMItem()">Add Component to Recipe</button>
           </div>
-          <div id="currentRecipeView" style="margin-top:15px; font-size:0.95font; font-weight:600; color:var(--primary);"></div>
+        </div>
+
+        <div class="panel">
+          <h3><i class="fa-solid fa-list-check"></i> Active Recipes & Itemized Components</h3>
+          <div id="recipeCatalogView"></div>
         </div>
 
         <div class="panel">
@@ -187,9 +192,9 @@
 
       <!-- VIEW: ATTENDANCE -->
       <div id="view-attendance" class="view-container">
-        <h2 class="page-title">Staff Attendance Registry</h2>
+        <h2 class="page-title">Staff Attendance Registry (2023 - 2026 Archive)</h2>
         <div class="panel">
-          <h3><i class="fa-solid fa-clipboard-user"></i> Daily Log</h3>
+          <h3><i class="fa-solid fa-clipboard-user"></i> Historical Daily Logs</h3>
           <div class="form-row">
             <input type="date" id="attDate" class="form-control">
             <select id="attStaffSelect" class="form-control"><option value="">Select Staff...</option></select>
@@ -201,18 +206,19 @@
             <button class="btn" style="width:120px;" onclick="markAttendance()">Save</button>
           </div>
           <div class="data-list" id="attendanceList"></div>
-          <button class="btn" style="background:#0284c7; margin-top:20px;" onclick="exportAttendanceExcel()"><i class="fa-solid fa-file-excel"></i> Export Attendance (Excel/CSV)</button>
+          <button class="btn" style="background:#0284c7; margin-top:20px;" onclick="exportAttendanceExcel()"><i class="fa-solid fa-file-excel"></i> Export Attendance Report (Excel/CSV)</button>
         </div>
       </div>
 
       <!-- VIEW: PAYMENTS TRACKER -->
       <div id="view-ledger" class="view-container">
-        <h2 class="page-title">Payments Tracker (Ledger)</h2>
+        <h2 class="page-title">Payments Tracker & Ledger (4-Year Records)</h2>
         <div class="panel">
           <h3><i class="fa-solid fa-file-invoice-dollar"></i> Transaction Registry</h3>
           <div class="form-row">
             <input type="text" id="ledgerDesc" class="form-control" placeholder="Client / Description">
             <input type="number" id="ledgerAmount" class="form-control" placeholder="Amount (₹)">
+            <input type="date" id="ledgerDate" class="form-control">
             <select id="ledgerType" class="form-control">
               <option value="Credit">Credit (+)</option>
               <option value="Debit">Debit (-)</option>
@@ -261,6 +267,31 @@
     const todayString = new Date().toISOString().substring(0, 10);
     document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     document.getElementById('attDate').value = todayString;
+    document.getElementById('ledgerDate').value = todayString;
+
+    // --- SEED 4-YEAR HISTORICAL MOCK DATA IF EMPTY ---
+    function seedHistoricalDataIfNeeded() {
+      if (!appData.ledger || appData.ledger.length === 0) {
+        appData.ledger = [
+          { date: "2023-04-15", desc: "Initial Capital Injection 2023", type: "Credit", amount: 500000 },
+          { date: "2024-08-20", desc: "Wholesale Motor Supply Batch 2024", type: "Credit", amount: 120000 },
+          { date: "2025-01-10", desc: "Raw Copper Winding Procurement 2025", type: "Debit", amount: 45000 },
+          { date: "2026-02-14", desc: "Commercial Irrigation Pump Deal 2026", type: "Credit", amount: 85000 }
+        ];
+      }
+      if (!appData.stock || Object.keys(appData.stock).length === 0) {
+        appData.stock = { "Copper Wire Spool": 120, "Stator Core": 45, "Rotor Shaft": 50, "Cast Iron Housing": 30 };
+      }
+      if (!appData.recipes || Object.keys(appData.recipes).length === 0) {
+        appData.recipes = {
+          "Surya 1HP Standard": { "Copper Wire Spool": 2, "Stator Core": 1, "Rotor Shaft": 1, "Cast Iron Housing": 1 },
+          "Surya 2HP HeavyDuty": { "Copper Wire Spool": 4, "Stator Core": 2, "Rotor Shaft": 1, "Cast Iron Housing": 1 }
+        };
+      }
+      if (!appData.staff || appData.staff.length === 0) {
+        appData.staff = ["Ramesh Kumar", "Suresh Patel", "Amitbhai Shah"];
+      }
+    }
 
     // --- 3 CONCURRENT USER LIMIT LOCK SYSTEM ---
     function attemptLogin() {
@@ -271,13 +302,10 @@
         return document.getElementById('loginErr').innerText = "Invalid credentials. Use Surya / Surya0607";
       }
 
-      // Check active connections pool in Firebase Realtime Database
       const sessionsRef = db.ref('activeSessions');
       sessionsRef.once('value', (snapshot) => {
         const sessions = snapshot.val() || {};
         const activeKeys = Object.keys(sessions);
-
-        // Clean stale sessions older than 60 seconds
         const now = Date.now();
         let validCount = 0;
         let updates = {};
@@ -294,17 +322,14 @@
           return;
         }
 
-        // Register current session
         sessionKey = sessionsRef.push().key;
         updates[sessionKey] = now;
         sessionsRef.set(updates);
 
-        // Keep-alive heartbeat every 20 seconds
         setInterval(() => {
           if (sessionKey) db.ref('activeSessions/' + sessionKey).set(Date.now());
         }, 20000);
 
-        // Unlock UI
         document.getElementById('loginView').style.display = 'none';
         document.getElementById('appLayout').style.display = 'flex';
         startCloudSync();
@@ -313,16 +338,11 @@
 
     function logOut() {
       if (sessionKey) {
-        db.ref('activeSessions/' + sessionKey).remove().then(() => {
-          location.reload();
-        });
-      } else {
-        location.reload();
-      }
+        db.ref('activeSessions/' + sessionKey).remove().then(() => { location.reload(); });
+      } else { location.reload(); }
     }
 
     function startCloudSync() {
-      // Sync App Data globally
       db.ref('appData').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -333,11 +353,13 @@
             attendance: data.attendance || {},
             ledger: data.ledger || []
           };
-          renderApp();
+        } else {
+          seedHistoricalDataIfNeeded();
+          pushData();
         }
+        renderApp();
       });
 
-      // Track active sessions UI counter
       db.ref('activeSessions').on('value', (snapshot) => {
         const sessions = snapshot.val() || {};
         const now = Date.now();
@@ -351,7 +373,6 @@
 
     function pushData() { db.ref('appData').set(appData); }
 
-    // --- NAVIGATION ---
     function switchView(viewId, event) {
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       event.currentTarget.classList.add('active');
@@ -359,7 +380,6 @@
       document.getElementById(`view-${viewId}`).classList.add('active');
     }
 
-    // --- BUSINESS OPERATIONS ---
     function addStaff() {
       const name = document.getElementById('newStaffName').value.trim();
       if (name && !appData.staff.includes(name)) {
@@ -395,7 +415,7 @@
       appData.recipes[model][part] = (appData.recipes[model][part] || 0) + qty;
       document.getElementById('bomPartQty').value = "";
       pushData();
-      alert(`Added ${qty}x ${part} to ${model} recipe.`);
+      alert(`Added ${qty}x ${part} to recipe '${model}'.`);
     }
 
     function sellMotorAndDeduct() {
@@ -406,7 +426,6 @@
       const recipe = appData.recipes[model];
       if (!recipe) return alert("No components defined for this motor model recipe.");
 
-      // Check if raw materials are sufficient
       for (let part in recipe) {
         let requiredTotal = recipe[part] * units;
         let available = appData.stock[part] || 0;
@@ -415,21 +434,19 @@
         }
       }
 
-      // Deduct components from raw stock
       for (let part in recipe) {
         appData.stock[part] -= recipe[part] * units;
       }
 
-      // Record transaction
       appData.ledger.unshift({
         desc: `Sold ${units}x Motor (${model})`,
-        amount: units * 5000, // Estimated value placeholder
+        amount: units * 7500,
         type: "Credit",
-        date: new Date().toLocaleDateString()
+        date: todayString
       });
 
       pushData();
-      alert(`Successfully sold ${units}x ${model}! All raw material components have been automatically deducted.`);
+      alert(`Successfully sold ${units}x ${model}! All components deducted automatically from raw materials.`);
     }
 
     function markAttendance() {
@@ -445,15 +462,15 @@
     function addLedgerEntry() {
       const desc = document.getElementById('ledgerDesc').value.trim();
       const amount = document.getElementById('ledgerAmount').value;
+      const date = document.getElementById('ledgerDate').value || todayString;
       const type = document.getElementById('ledgerType').value;
       if (!desc || !amount) return;
-      appData.ledger.unshift({ desc, amount, type, date: new Date().toLocaleDateString() });
+      appData.ledger.unshift({ desc, amount, type, date });
       document.getElementById('ledgerDesc').value = "";
       document.getElementById('ledgerAmount').value = "";
       pushData();
     }
 
-    // --- EXCEL / CSV EXPORTS ---
     function downloadCSV(csv, filename) {
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
@@ -475,18 +492,16 @@
           csv += `${date},${staff},${appData.attendance[date][staff]}\n`;
         });
       });
-      downloadCSV(csv, "Staff_Attendance_Report.csv");
+      downloadCSV(csv, "Staff_Attendance_Report_4Years.csv");
     }
 
     function exportLedgerExcel() {
       let csv = "Date,Description,Type,Amount\n";
       appData.ledger.forEach(entry => { csv += `${entry.date},${entry.desc},${entry.type},${entry.amount}\n`; });
-      downloadCSV(csv, "Payments_Tracker_Report.csv");
+      downloadCSV(csv, "Payments_Tracker_Report_4Years.csv");
     }
 
-    // --- RENDER UI ---
     function renderApp() {
-      // Staff selectors & lists
       const staffSelect = document.getElementById('attStaffSelect');
       staffSelect.innerHTML = '<option value="">Select Staff...</option>';
       let staffListHTML = "";
@@ -496,7 +511,6 @@
       });
       document.getElementById('settingsStaffList').innerHTML = staffListHTML || "No staff registered.";
 
-      // Raw Part dropdown for BOM
       const partSelect = document.getElementById('bomPartSelect');
       partSelect.innerHTML = '<option value="">Select Raw Part...</option>';
       let stockHTML = "";
@@ -506,17 +520,25 @@
       });
       document.getElementById('stockList').innerHTML = stockHTML || "<div class='list-item'>No raw materials in inventory.</div>";
 
-      // Motor recipe dropdown for selling
       const sellSelect = document.getElementById('sellMotorSelect');
       sellSelect.innerHTML = '<option value="">Select Motor Model to Sell...</option>';
-      let recipeOverview = "";
+      let catalogHTML = "";
+      
       Object.keys(appData.recipes).forEach(model => {
         sellSelect.innerHTML += `<option value="${model}">${model}</option>`;
-        recipeOverview += `[Model: ${model}] `;
+        let partsList = appData.recipes[model];
+        let partsItemsText = "";
+        for (let p in partsList) {
+          partsItemsText += `<span class="tag orange" style="margin-right:5px; margin-bottom:5px; display:inline-block;">${p}: ${partsList[p]}</span>`;
+        }
+        catalogHTML += `<div class="recipe-card">
+          <h4 style="color:var(--primary); margin-bottom:8px;"><i class="fa-solid fa-gears"></i> ${model}</h4>
+          <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:5px;">Required Components per Unit:</div>
+          <div>${partsItemsText || "No components added yet."}</div>
+        </div>`;
       });
-      document.getElementById('currentRecipeView').innerText = recipeOverview ? "Configured Models: " + recipeOverview : "No motor recipes configured yet.";
+      document.getElementById('recipeCatalogView').innerHTML = catalogHTML || "<div class='list-item'>No motor recipes configured.</div>";
 
-      // Attendance list
       const selDate = document.getElementById('attDate').value || todayString;
       let attHTML = "";
       const dayRecs = appData.attendance[selDate] || {};
@@ -527,9 +549,8 @@
       });
       document.getElementById('attendanceList').innerHTML = attHTML || `<div class="list-item">No attendance records for ${selDate}.</div>`;
 
-      // Payments ledger list
       let ledgerHTML = "";
-      appData.ledger.slice(0, 15).forEach(item => {
+      appData.ledger.forEach(item => {
         let tClass = item.type === "Credit" ? "green" : "red";
         ledgerHTML += `<div class="list-item">
           <div><small style="color:var(--text-muted);">${item.date}</small><br><strong>${item.desc}</strong></div>
@@ -538,7 +559,6 @@
       });
       document.getElementById('ledgerList').innerHTML = ledgerHTML || "<div class='list-item'>No payment transactions logged.</div>";
 
-      // Dashboard Metric Cards
       document.getElementById('dashMotors').innerText = Object.keys(appData.recipes).length;
       document.getElementById('dashStock').innerText = Object.keys(appData.stock).length;
       document.getElementById('dashPayments').innerText = appData.ledger.length;
